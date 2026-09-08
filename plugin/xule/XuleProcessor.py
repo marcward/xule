@@ -108,7 +108,7 @@ def process_xule(rule_set, model_xbrl, cntlr, options, saved_taxonomies=None, is
 
     if getattr(global_context.options, "xule_time", None) is not None:
         fact_index_end = datetime.datetime.today()
-        global_context.message_queue.print(f"Index build time {fact_index_end - fact_index_start}.", "xule.buildIndexTime")
+        global_context.message_queue.print("Index build time %s." % (fact_index_end - fact_index_start), "xule.buildIndexTime")
 
     # Determine if constants should be precalced. This is determined by the --xule-precalc-constants optoin on the command line. This is useful to simulate how the processor works in the server
     # environment.
@@ -117,13 +117,13 @@ def process_xule(rule_set, model_xbrl, cntlr, options, saved_taxonomies=None, is
         process_precalc_constants(global_context)
         constant_end = datetime.datetime.today()
         constant_time = constant_end - constant_start
-        global_context.message_queue.print(f"Time to calculated non instance constants: {constant_time}", "xule.precalcConsts")
+        global_context.message_queue.print("Time to calculated non instance constants: %s" % (constant_time), "xule.precalcConsts")
 
     # Load any reloadable saved constnats
     if getattr(global_context.options, "xule_args_file", False):
         constant_start = datetime.datetime.today()
         process_reloadable_constants(global_context)
-        global_context.message_queue.print(f"Time to calculated non instance constants: {datetime.datetime.today() - constant_start}", "xule.loadSavedConstants")
+        global_context.message_queue.print("Time to calculated non instance constants: %s" % (datetime.datetime.today() - constant_start), "xule.loadSavedConstants")
 
     # Determine if constants should be outputed
     if getattr(global_context.options, "xule_output_constants", None) is not None:
@@ -137,8 +137,8 @@ def process_xule(rule_set, model_xbrl, cntlr, options, saved_taxonomies=None, is
         total_end = datetime.datetime.today()
         if getattr(global_context.options, "xule_precalc_constants", False):
             global_context.message_queue.print(
-                f"Time to process excluding non instance constant: {total_end - total_start - constant_time}.", "xule.ruleEvalTime")
-        global_context.message_queue.print(f"Total time to process: {total_end - total_start}.", "xule.ruleEvalTime")
+                "Time to process excluding non instance constant: %s." % (total_end - total_start - constant_time), "xule.ruleEvalTime")
+        global_context.message_queue.print("Total time to process: %s." % (total_end - total_start), "xule.ruleEvalTime")
     # Shutdown Message Queue
     if getattr(global_context.options, "xule_multi", False):
         global_context.message_queue.stop()
@@ -218,7 +218,7 @@ def evaluate_rule_set(global_context):
             cat_rule = cat_rules[rule_name]
 
             if skip_rules is not None and rule_name in skip_rules:
-                global_context.message_queue.print(f"Skipping rule: {rule_name}", "xule.ruleSkipped")
+                global_context.message_queue.print("Skipping rule: %s" % rule_name, "xule.ruleSkipped")
                 continue
 
             if not (run_only_rules is None or rule_name in run_only_rules):
@@ -250,14 +250,14 @@ def evaluate_rule_set(global_context):
 
                 # Evaluate the rule. 
                 if global_context.model is not None:
-                    global_context.model.modelManager.showStatus(f"Processing rule {rule_name}")
+                    global_context.model.modelManager.showStatus("Processing rule {}".format(rule_name))
                 evaluate(rule, xule_context)
 
             except (XuleProcessingError, XuleBuildTableError) as e:
                 if getattr(global_context.options, "xule_crash", False):
                     raise
                 else:
-                    xule_context.global_context.message_queue.error("xule:error", f"rule {rule_name}: {e!s}")
+                    xule_context.global_context.message_queue.error("xule:error", "rule %s: %s" % (rule_name, str(e)))
 
             except XuleIterationStop:
                 pass
@@ -267,7 +267,7 @@ def evaluate_rule_set(global_context):
                     # if global_context.crash_on_error:
                     raise
                 else:
-                    xule_context.global_context.message_queue.error("xule:error", f"rule {rule_name}: {e!s}")
+                    xule_context.global_context.message_queue.error("xule:error", "rule %s: %s" % (rule_name, str(e)))
 
             if getattr(global_context.options, "xule_time", None) is not None:
                 rule_end = datetime.datetime.today()
@@ -303,16 +303,16 @@ def evaluate_rule_set(global_context):
 
     # Display timing information
     if getattr(global_context.options, "xule_time", None) is not None:
-        global_context.message_queue.print(f"Total number of rules processed: {len(times)}", "xule.ruleEvalTime")
+        global_context.message_queue.print("Total number of rules processed: %i" % len(times), "xule.ruleEvalTime")
         # slow_rules = [timing_info for timing_info in times if timing_info[1].total_seconds() > 0.001]
         slow_rules = sorted([timing_info for timing_info in times if
                              timing_info[1].total_seconds() > getattr(global_context.options, "xule_time", None)],
                             key=lambda tup: tup[1], reverse=True)
         # slow_rules = [timing_info for timing_info in times if timing_info[1].total_seconds() > global_context.show_timing]
         global_context.message_queue.print(
-            f"Number of rules over {getattr(global_context.options, 'xule_time', None)}s: {len(slow_rules)}", "xule.ruleEvalTime")
+            "Number of rules over %ss: %i" % (getattr(global_context.options, "xule_time", None), len(slow_rules)), "xule.ruleEvalTime")
         for slow_rule in slow_rules:
-            global_context.message_queue.print(f"Rule {slow_rule[0]} end. Took {slow_rule[1]}", "xule.ruleEvalTime")
+            global_context.message_queue.print("Rule %s end. Took %s" % (slow_rule[0], slow_rule[1]), "xule.ruleEvalTime")
             # global_context.message_queue.print("Global expression cache size: %i" % len(global_context.expression_cache))
 
 def index_property_start(model_fact):
@@ -602,7 +602,7 @@ def evaluate(rule_part, xule_context, trace_dependent=False, override_table_id=N
                         value.tags = new_tags
             else:
                 raise XuleProcessingError(
-                    _(f"Internal error: Found iterable ({rule_part_name}) that does not have a dependency flag."),
+                    _("Internal error: Found iterable (%s) that does not have a dependency flag." % rule_part_name),
                     xule_context)
         else:  # is_iterable
             trace_source = "e"
@@ -903,7 +903,8 @@ def evaluate_assertion(assert_rule, xule_context):
                     xule_context.iteration_table.current_alignment is None and xule_context.aligned_result_only):
 
                 if xule_value.type != 'bool':
-                    raise XuleProcessingError(_(f"Raise {xule_context.rule_name} did not evaluate to a boolean, found '{xule_value.type}'."), xule_context)
+                    raise XuleProcessingError(_("Raise %s did not evaluate to a boolean, found '%s'." % (
+                    xule_context.rule_name, xule_value.type)), xule_context)
 
                 # Determine if a message should be sent
                 send_message = ((assert_rule['satisfactionType'] == 'satisfied' and xule_value.value == True) or
@@ -1130,7 +1131,7 @@ def evaluate_bool_literal(literal, xule_context):
     elif literal['value'] == "false":
         return XuleValue(xule_context, False, 'bool')
     else:
-        raise XuleProcessingError(_(f"Invalid boolean literal found: {literal.value}"), xule_context)
+        raise XuleProcessingError(_("Invalid boolean literal found: %s" % literal.value), xule_context)
 
 def evaluate_period_literal(literal, xule_context):
     """Evaluate a period literal
@@ -1198,7 +1199,7 @@ def evaluate_string_literal(literal, xule_context):
             # This is an expression.
             expr_value = evaluate(string_item, xule_context)
             # The result of the expression is not directly put in the format string. Instead a substitution is used
-            sub_name = f'sub{sub_num}'
+            sub_name = 'sub{}'.format(sub_num)
             sub_num += 1
             # Substitutions is a list of a 3 part tuple 0=location in format string, 1=substitution name, 2=substitution value
             substitutions.append((len(format_string), sub_name, expr_value.format_value()))
@@ -1274,11 +1275,11 @@ def evaluate_namespace_group(ns_group, xule_context):
     if not ns_group_info['calculated']:
         ns_list = evaluate(ns_group_info['expr']['body'], xule_context, override_table_id=xule_context.iteration_table.current_table.table_id)
         if ns_list.type not in ('set', 'list', 'string'):
-            raise XuleProcessingError(_(f"Value of a namespace group must be a string or a set or list of strings, found '{ns_list.type}'"), xule_context)
+            raise XuleProcessingError(_("Value of a namespace group must be a string or a set or list of strings, found '%s'" % ns_list.type), xule_context)
         if ns_list.type in ('list', 'set'):
             for fragment in ns_list.value:
                 if fragment.type != 'string':
-                    raise XuleProcessingError(_(f"The values in a namespace group set or list must be strings, found '{fragment.type}'"), xule_context)
+                    raise XuleProcessingError(_("The values in a namespace group set or list must be strings, found '%s'"% fragment.type), xule_context)
 
         ns_group_info['calculated'] = True
         ns_group_info['value'] = ns_list
@@ -1467,7 +1468,7 @@ def calc_var(var_info, const_ref, xule_context):
         # The var_info is really the constant info from the global context
         var_value = evaluate(var_info['expr'], xule_context, override_table_id=const_ref['table_id'])
     else:
-        raise XuleProcessingError(_(f"Internal error: unkown variable type '{var_info['type']}'"), xule_context)
+        raise XuleProcessingError(_("Internal error: unkown variable type '%s'" % var_info['type']), xule_context)
 
     var_value = var_value.clone()
     # if var_info['tagged']:
@@ -1546,7 +1547,7 @@ def evaluate_constant_assign(const_assign, xule_context):
     """
     const_info = xule_context.find_var(const_assign['constantName'], const_assign['node_id'], constant_only=True)
     if const_info is None:
-        raise XuleProcessingError(_(f"Constant '{const_assign['constantName']}' not found"), xule_context)
+        raise XuleProcessingError(_("Constant '%s' not found" % const_assign['constantName']), xule_context)
 
     if not const_info['calculated']:
         # Check if there is a xule-arg that overrides the constant
@@ -1652,7 +1653,7 @@ def evaluate_if(if_expr, xule_context):
         if condition_value.type in ('unbound', 'none'):
             return XuleValue(xule_context, None, 'unbound')
         elif condition_value.type != 'bool':
-            raise XuleProcessingError(_(f"If condition is not a boolean, found '{condition_value.type}'"),
+            raise XuleProcessingError(_("If condition is not a boolean, found '%s'" % condition_value.type),
                                       xule_context)
         else:
             if condition_value.value:
@@ -1682,7 +1683,7 @@ def evaluate_for(for_expr, xule_context):
         xule_context.used_expressions = saved_used_expressions | used_expressions
 
     if for_loop_collection.type not in ('list', 'set'):
-        raise XuleProcessingError(_(f"For loop requires a set or list, found '{for_loop_collection.type}'."),
+        raise XuleProcessingError(_("For loop requires a set or list, found '{}'.".format(for_loop_collection.type)),
                                   xule_context)
 
     for for_loop_var in for_loop_collection.value:
@@ -1799,7 +1800,7 @@ def evaluate_unary(unary_expr, xule_context):
         return initial_value.clone()
 
     if initial_value.type not in ('int', 'float', 'decimal'):
-        raise XuleProcessingError(_(f"Unary operator requires a numeric operand, found '{initial_value.type}'"),
+        raise XuleProcessingError(_("Unary operator requires a numeric operand, found '%s'" % initial_value.type),
                                   xule_context)
 
     if unary_expr['op'] == '-':
@@ -1856,10 +1857,10 @@ def evaluate_mult(mult_expr, xule_context):
             # at this point there should only be numerics.
             if left.type not in ('int', 'float', 'decimal'):
                 raise XuleProcessingError(
-                    _(f"The left operand of '{operator}' is not numeric, found '{left.type}'"), xule_context)
+                    _("The left operand of '%s' is not numeric, found '%s'" % (operator, left.type)), xule_context)
             if right.type not in ('int', 'float', 'decimal'):
                 raise XuleProcessingError(
-                    _(f"The right operand of '{operator}' is not numeric, found '{right.type}'"), xule_context)
+                    _("The right operand of '%s' is not numeric, found '%s'" % (operator, right.type)), xule_context)
 
             combined_type, left_compute_value, right_compute_value = combine_xule_types(left, right, xule_context)
             '''NEED TO HANDLE CHNAGES IN UNIT ALIGNMENT'''
@@ -1891,10 +1892,10 @@ def evaluate_intersect(inter_expr, xule_context):
             left = XuleValue(xule_context, None, 'unbound')
         if left.type != 'set':
             raise XuleProcessingError(
-                _(f"Intersection can only operatate on sets. The left side is a '{left.type}'."), xule_context)
+                _("Intersection can only operatate on sets. The left side is a '{}'.".format(left.type)), xule_context)
         if right.type != 'set':
             raise XuleProcessingError(
-                _(f"Intersection can only operatate on sets. The right side is a '{right.type}'."),
+                _("Intersection can only operatate on sets. The right side is a '{}'.".format(right.type)),
                 xule_context)
 
         left = XuleUtility.intersect_sets(xule_context, left, right)
@@ -1920,11 +1921,11 @@ def evaluate_symetric_difference(sym_diff_expr, xule_context):
             left = XuleValue(xule_context, None, 'unbound')
         if left.type != 'set':
             raise XuleProcessingError(
-                _(f"Symetric difference can only operatate on sets. The left side is a '{left.type}'."),
+                _("Symetric difference can only operatate on sets. The left side is a '{}'.".format(left.type)),
                 xule_context)
         if right.type != 'set':
             raise XuleProcessingError(
-                _(f"Symetric difference can only operatate on sets. The right side is a '{right.type}'."),
+                _("Symetric difference can only operatate on sets. The right side is a '{}'.".format(right.type)),
                 xule_context)
 
         left = XuleUtility.symetric_difference(xule_context, left, right)
@@ -1970,7 +1971,7 @@ def evaluate_add(add_expr, xule_context):
 
         if left.type not in (
         'int', 'float', 'decimal', 'string', 'uri', 'instant', 'time-period', 'set', 'list', 'dictionary', 'unbound', 'none'):
-            raise XuleProcessingError(_(f"Left side of a {operator} operation cannot be {left.type}."),
+            raise XuleProcessingError(_("Left side of a {} operation cannot be {}.".format(operator, left.type)),
                                       xule_context)
 
         if right_bar:
@@ -1984,12 +1985,12 @@ def evaluate_add(add_expr, xule_context):
 
         if right.type not in (
         'int', 'float', 'decimal', 'string', 'uri', 'instant', 'time-period', 'set', 'list', 'dictionary', 'unbound', 'none'):
-            raise XuleProcessingError(_(f"Right side of a {operator} operation cannot be {right.type}."),
+            raise XuleProcessingError(_("Right side of a {} operation cannot be {}.".format(operator, right.type)),
                                       xule_context)
 
         # A time-period can be on the left only if the right is also a time period.
         if left.type == 'time-period' and right.type != 'time-period':
-            raise XuleProcessingError(_(f"Incompatabile operands {left.type} {operator} {right.type}."),
+            raise XuleProcessingError(_("Incompatabile operands {} {} {}.".format(left.type, operator, right.type)),
                                       xule_context)
         do_calc = True
 
@@ -2015,7 +2016,7 @@ def evaluate_add(add_expr, xule_context):
         if do_calc:
             combined_type, left_compute_value, right_compute_value = combine_xule_types(left, right, xule_context)
             if combined_type == 'unbound':
-                raise XuleProcessingError(_(f"Incompatabile operands {left.type} {operator} {right.type}."),
+                raise XuleProcessingError(_("Incompatabile operands {} {} {}.".format(left.type, operator, right.type)),
                                           xule_context)
 
             if '+' in operator:
@@ -2026,7 +2027,7 @@ def evaluate_add(add_expr, xule_context):
                 elif left.type == 'dictionary' and right.type == 'dictionary':
                     left = XuleUtility.add_dictionaries(xule_context, left, right)
                 elif left.type == 'dictionary' and right.type in ('set', 'list'):
-                    raise XuleProcessingError(_(f"Cannot add a dictionary and a {right.type}"), xule_context)
+                    raise XuleProcessingError(_("Cannot add a dictionary and a %s" % right.type), xule_context)
                 elif left.type == 'instant' and right.type == 'instant':
                     raise XuleProcessingError(_("Dates cannot be added"), xule_context)
                 else:
@@ -2046,7 +2047,7 @@ def evaluate_add(add_expr, xule_context):
                     left = XuleValue(xule_context, left_compute_value - right_compute_value, combined_type)
             else:
                 raise XuleProcessingError(
-                    _(f"Unknown operator '{operator}' found in addition/subtraction operation."), xule_context)
+                    _("Unknown operator '%s' found in addition/subtraction operation." % operator), xule_context)
 
     return left
 
@@ -2111,7 +2112,7 @@ def evaluate_comp(comp_expr, xule_context):
             elif operator == '>=':
                 interim_value = XuleValue(xule_context, left_compute_value >= right_compute_value, 'bool')
         else:
-            raise XuleProcessingError(_(f"Unknown operator '{operator}'."), xule_context)
+            raise XuleProcessingError(_("Unknown operator '%s'." % operator), xule_context)
 
         left = interim_value
 
@@ -2134,7 +2135,7 @@ def evaluate_not(not_expr, xule_context):
 
     if initial_value.type != 'bool':
         raise XuleProcessingError(
-            _(f"The operand of the 'not' expression must be boolean, found '{initial_value.type}'"), xule_context)
+            _("The operand of the 'not' expression must be boolean, found '%s'" % initial_value.type), xule_context)
 
     return XuleValue(xule_context, not initial_value.value, 'bool')
 
@@ -2167,7 +2168,8 @@ def evaluate_and(and_expr, xule_context):
                 has_unbound = True
             if left.type not in ('unbound', 'none', 'bool') or right.type not in ('unbound', 'none', 'bool'):
                 raise XuleProcessingError(_(
-                    f"Operand of 'and' expression is not boolean. Left and right operand types are '{left.type}' and '{right.type}'."), xule_context)
+                    "Operand of 'and' expression is not boolean. Left and right operand types are '%s' and '%s'." % (
+                    left.type, right.type)), xule_context)
 
             if left.type == 'bool' and right.type == 'bool':
                 left = XuleValue(xule_context, left.value and right.value, 'bool')
@@ -2217,7 +2219,8 @@ def evaluate_or(or_expr, xule_context):
                 has_unbound = True
             if left.type not in ('unbound', 'none', 'bool') or right.type not in ('unbound', 'none', 'bool'):
                 raise XuleProcessingError(_(
-                    f"Operand of 'or' expression is not boolean. Left and right operand types are '{left.type}' and '{right.type}'."), xule_context)
+                    "Operand of 'or' expression is not boolean. Left and right operand types are '%s' and '%s'." % (
+                    left.type, right.type)), xule_context)
 
             if left.type == 'bool' and right.type == 'bool':
                 left = XuleValue(xule_context, left.value or right.value, 'bool')
@@ -2277,7 +2280,8 @@ def evaluate_nesting_factset(factset, xule_context):
 
     if current_aspects & factset_aspects:
         raise XuleProcessingError(_(
-            f"A nested factset clause cannot include aspects in an outer factset clause, found '{', '.join(current_aspects & factset_aspects)}'."), xule_context)
+            "A nested factset clause cannot include aspects in an outer factset clause, found '%s'." % ", ".join(
+                current_aspects & factset_aspects)), xule_context)
 
     # add the align aspects to the nested_filter in the context
     xule_context.filter_add('nested', aspect_filters)
@@ -2560,7 +2564,8 @@ def factset_pre_match(factset, filters, non_aligned_filters, align_aspects, mode
                                 facts_by_aspect = fact_index[index_key][None]
                 else:
                     if aspect_info[ASPECT_OPERATOR] == 'in' and filter_member.type not in ('list', 'set'):
-                        raise XuleProcessingError(_(f"The value for '{index_key[ASPECT]}' with 'in' must be a set or list, found '{filter_member.type}'"), xule_context)
+                        raise XuleProcessingError(_("The value for '%s' with 'in' must be a set or list, found '%s'" % (
+                        index_key[ASPECT], filter_member.type)), xule_context)
 
                     # fix for aspects that take qname members (concept and explicit dimensions. The member can be a concept or a qname. The index is by qname.
                     if index_key in (('builtin', 'concept'), ('property', 'cube', 'name')):
@@ -2690,7 +2695,8 @@ def fact_index_key(aspect_info, fact_index, xule_context):
                     aspect_info[ASPECT_PROPERTY][1]
         if index_key not in fact_index and index_key not in xmi.FACT_INDEX_PROPERTIES and index_key not in xmi.TABLE_INDEX_PROPERTIES and aspect_info[ASPECT_PROPERTY][0] != 'attribute':
             raise XuleProcessingError(_(
-                f"Factset aspect property '{index_key[2]}' is not a valid property of aspect '{index_key[1]}'."),
+                "Factset aspect property '{}' is not a valid property of aspect '{}'.".format(index_key[2],
+                                                                                                index_key[1])),
                                         xule_context)    
     return index_key                                            
 
@@ -2918,7 +2924,7 @@ def process_filtered_facts(factset, pre_matched_facts, non_align_aspects, align_
                                                        'entity'),
                                              'single')
                     else:
-                        raise XuleProcessingError(_(f"Unknown built in aspect '{aspect_name}'"), xule_context)
+                        raise XuleProcessingError(_("Unknown built in aspect '%s'" % aspect_name), xule_context)
                 elif aspect_type == 'explicit_dimension':
                     model_dimension = model_fact.context.qnameDims.get(aspect_name)
                     if model_dimension is None:
@@ -3011,7 +3017,7 @@ def process_filtered_facts(factset, pre_matched_facts, non_align_aspects, align_
                             '''It may be that the false value should also be included with an unbound value'''
                         else:
                             raise XuleProcessingError(_(
-                                f"Where clause in a factset did not evaluate to a boolean. Found '{where_value.type}'."),
+                                "Where clause in a factset did not evaluate to a boolean. Found '%s'." % where_value.type),
                                                       xule_context)
 
                     # xule_context.iteration_table.del_current()
@@ -3092,7 +3098,7 @@ def evaluate_filter(filter_expr, xule_context):
 
     if collection_value.type not in ('set', 'list'):
         raise XuleProcessingError(
-            _(f"Filter expresssion can only be used on a 'set' or 'list', found '{collection_value.type}'."),
+            _("Filter expresssion can only be used on a 'set' or 'list', found '{}'.".format(collection_value.type)),
             xule_context)
 
     # do nothing if there is no filtering
@@ -3113,7 +3119,7 @@ def evaluate_filter(filter_expr, xule_context):
                              item_value,
                              'single')
         try:
-            xule_context.column_prefix.append(f"{filter_expr['node_id']}-{item_number}")
+            xule_context.column_prefix.append("{}-{}".format(filter_expr['node_id'], item_number))
             try:
                 keep = True
                 if 'whereExpr' in filter_expr:
@@ -3124,7 +3130,8 @@ def evaluate_filter(filter_expr, xule_context):
                         keep = filter_where_result.value
                     elif filter_where_result.type not in ('unbound', 'none'):
                         raise XuleProcessingError(_(
-                            f"The where clause on a filter expression must evaluate to a boolean, found '{filter_where_result.type}'."), xule_context)
+                            "The where clause on a filter expression must evaluate to a boolean, found '{}'.".format(
+                                filter_where_result.type)), xule_context)
 
                 if keep:
                     if 'returnsExpr' in filter_expr:
@@ -3163,7 +3170,7 @@ def evaluate_navigate(nav_expr, xule_context):
         dts_value = evaluate(nav_expr['taxonomy'], xule_context)
         if dts_value.type != 'taxonomy':
             raise XuleProcessingError(
-                _(f"Expecting a taxonomy for the 'taxonomy' clause of navigate. Found {dts_value.type}."),
+                _("Expecting a taxonomy for the 'taxonomy' clause of navigate. Found {}.".format(dts_value.type)),
                 xule_context)
         dts = dts_value.value
     else:
@@ -3475,7 +3482,8 @@ def nav_traverse_where(nav_expr, clause_name, relationship, xule_context):
             return False
         elif nav_where_results.type not in ('unbound', 'none'):
             raise XuleProcessingError(_(
-                f"The {clause_name[:clause_name.find('Expr')]} clause on a navigation expression must evaluate to a boolean, found '{nav_where_results.type}'."), xule_context)
+                "The {} clause on a navigation expression must evaluate to a boolean, found '{}'.".format(
+                    clause_name[:clause_name.find('Expr')], nav_where_results.type)), xule_context)
 
 
 def nav_get_role(nav_expr, role_type, dts, xule_context):
@@ -3503,7 +3511,7 @@ def nav_get_role(nav_expr, role_type, dts, xule_context):
             elif role_value.type == 'role':
                 return_values.append(role_value.value.roleURI)
             else:
-                errors.append(f"Navigation is expecting a role (role, string, uri, or short role name), found '{role_value.type}'.")
+                errors.append("Navigation is expecting a role (role, string, uri, or short role name), found '{}'.".format(role_value.type))
 
         if len(errors) > 0:
             raise XuleProcessingError(_('\n'.join(errors)), xule_context)
@@ -3552,11 +3560,12 @@ def nav_get_element(nav_expr, side, dts, xule_context):
                     concepts.add(item.value)
                 else:
                     raise XuleProcessingError(_(
-                        f"In navigation, expecting a collection of concepts or concepts, but found {item.type}."))
+                        "In navigation, expecting a collection of concepts or concepts, but found {}.".format(
+                            item.type)))
             return concepts
         else:
             raise XuleProcessingError(
-                _(f"In navigation, expecting a concept or qname, but found {side_value.type}."))
+                _("In navigation, expecting a concept or qname, but found {}.".format(side_value.type)))
     else:
         return None  # The side is not in the navigation expression
 
@@ -3698,7 +3707,7 @@ def nav_decorate_component_value(rel, direction, component_name, is_start, xule_
                 else:
                     return (attribute_value, 'string', component_name)
         else:
-            raise XuleProcessingError(_(f"Component {component_name} is not currently supported."),
+            raise XuleProcessingError(_("Component {} is not currently supported.".format(component_name)),
                                       xule_context)
 
 
@@ -4003,6 +4012,13 @@ def nav_finish_return_items(nav_expr, return_items, add_result_order, xule_conte
 
     final_results = list()
     final_shadow = list()
+    # Membership index for final_shadow. When the return type is a set, duplicates are dropped by
+    # checking the shadow value. Scanning final_shadow as a list makes that check O(n) per item
+    # (and each comparison is a full QName/tuple __eq__), so a large navigation degrades to O(n**2).
+    # The shadow values are already required to be hashable - the set return below builds a
+    # frozenset from them - so a companion set gives the same answer in O(1). final_shadow itself is
+    # still built as a list to preserve result ordering.
+    final_shadow_seen = set()
 
     def handle_return_item(return_item, cur_order):
 
@@ -4077,7 +4093,8 @@ def nav_finish_return_items(nav_expr, return_items, add_result_order, xule_conte
             final_results.append(item_result)
             final_shadow.append(item_shadow)
         else:  # Set
-            if item_shadow not in final_shadow:
+            if item_shadow not in final_shadow_seen:
+                final_shadow_seen.add(item_shadow)
                 final_results.append(item_result)
                 final_shadow.append(item_shadow)
 
@@ -4095,7 +4112,7 @@ def evaluate_function_ref(function_ref, xule_context):
         elif function_info[FUNCTION_TYPE] == 'regular':
             return regular_function(xule_context, function_ref, function_info)
         else:
-            raise XuleProcessingError(_(f"Unknown function type '{function_info[FUNCTION_TYPE]}'."),
+            raise XuleProcessingError(_("Unknown function type '{}'.".format(function_info[FUNCTION_TYPE])),
                                       xule_context)
     elif function_ref['functionName'] in XuleProperties.PROPERTIES:
         return property_as_function(xule_context, function_ref)
@@ -4119,7 +4136,7 @@ def property_as_function(xule_context, function_ref):
     # Check that there is at least one argument. This is the property object
     if len(function_ref['functionArgs']) == 0:
         raise XuleProcessingError(
-            _(f"The '{function_ref['functionName']}' function must have at least one argument, found none."),
+            _("The '{}' function must have at least one argument, found none.".format(function_ref['functionName'])),
             xule_context)
 
     # Check that the first argument is the right type
@@ -4138,7 +4155,10 @@ def property_as_function(xule_context, function_ref):
                 'noncollection' in property_info[XuleProperties.PROP_OPERAND_TYPES] or
                 (property_object.type in ('none', 'unbound') and property_info[XuleProperties.PROP_UNBOUND_ALLOWED])):
             raise XuleProcessingError(
-                _(f"The first argument of function '{function_ref['functionName']}' must be {', '.join(property_info[XuleProperties.PROP_OPERAND_TYPES])}, found '{property_object.type}'."),
+                _("The first argument of function '{}' must be {}, found '{}'.".format(function_ref['functionName'],
+                                                                                       ', '.join(property_info[
+                                                                                                     XuleProperties.PROP_OPERAND_TYPES]),
+                                                                                       property_object.type)),
                 xule_context)
 
     if property_info[XuleProperties.PROP_ARG_NUM] is not None:
@@ -4146,12 +4166,17 @@ def property_as_function(xule_context, function_ref):
         if property_info[XuleProperties.PROP_ARG_NUM] >= 0 and len(property_args) != property_info[
             XuleProperties.PROP_ARG_NUM]:
             raise XuleProcessingError(
-                _(f"Property '{function_ref['functionName']}' must have {property_info[XuleProperties.PROP_ARG_NUM]} arguments. Found {len(property_args)}."),
+                _("Property '%s' must have %s arguments. Found %i." % (function_ref['functionName'],
+                                                                       property_info[XuleProperties.PROP_ARG_NUM],
+                                                                       len(property_args))),
                 xule_context)
         elif len(property_args) > property_info[XuleProperties.PROP_ARG_NUM] * -1 and property_info[
             XuleProperties.PROP_ARG_NUM] < 0:
             raise XuleProcessingError(
-                _(f"Property '{function_ref['functionName']}' must have no more than {property_info[XuleProperties.PROP_ARG_NUM] * -1} arguments. Found {len(property_args)}."),
+                _("Property '%s' must have no more than %s arguments. Found %i." % (function_ref['functionName'],
+                                                                                    property_info[
+                                                                                        XuleProperties.PROP_ARG_NUM] * -1,
+                                                                                    len(property_args))),
                 xule_context)
     # prepare the arguments
     arg_values = []
@@ -4219,7 +4244,7 @@ def user_defined_function(xule_context, function_ref):
 
     function_info = xule_context.find_function(function_ref['functionName'])
     if function_info is None:
-        raise XuleProcessingError(f"Function '{function_ref['functionName']}' not found", xule_context)
+        raise XuleProcessingError("Function '%s' not found" % function_ref['functionName'], xule_context)
     else:
 #        # Get the list of variables and their values. This will put the current single value for the variable as an argument
 #        for var_ref in sorted(function_ref['var_refs'], key=lambda x: x[1]):
@@ -4416,7 +4441,7 @@ def evaluate_property(property_expr, xule_context):
     for current_property_expr in property_expr['properties']:
         # Check that this is a valid property
         if current_property_expr['propertyName'] not in XuleProperties.PROPERTIES:
-            raise XuleProcessingError(_(f"'{current_property_expr['propertyName']}' is not a valid property."),
+            raise XuleProcessingError(_("'%s' is not a valid property." % current_property_expr['propertyName']),
                                       xule_context)
 
         property_info = XuleProperties.PROPERTIES[current_property_expr['propertyName']]
@@ -4486,12 +4511,17 @@ def process_property(current_property_expr, object_value, property_info, xule_co
         if property_info[XuleProperties.PROP_ARG_NUM] >= 0 and len(property_args) != property_info[
             XuleProperties.PROP_ARG_NUM]:
             raise XuleProcessingError(
-                _(f"Property '{current_property_expr['propertyName']}' must have {property_info[XuleProperties.PROP_ARG_NUM]} arguments. Found {len(property_args)}."),
+                _("Property '%s' must have %s arguments. Found %i." % (current_property_expr['propertyName'],
+                                                                       property_info[XuleProperties.PROP_ARG_NUM],
+                                                                       len(property_args))),
                 xule_context)
         elif len(property_args) > property_info[XuleProperties.PROP_ARG_NUM] * -1 and property_info[
             XuleProperties.PROP_ARG_NUM] < 0:
             raise XuleProcessingError(_(
-                f"Property '{current_property_expr['propertyName']}' must have no more than {property_info[XuleProperties.PROP_ARG_NUM] * -1} arguments. Found {len(property_args)}."),
+                "Property '%s' must have no more than %s arguments. Found %i." % (current_property_expr['propertyName'],
+                                                                                  property_info[
+                                                                                      XuleProperties.PROP_ARG_NUM] * -1,
+                                                                                  len(property_args))),
                                       xule_context)
     # prepare the arguments
     arg_values = []
@@ -4688,16 +4718,16 @@ def process_factset_aspects(factset, xule_context):
                 if instance.type == 'instance':
                     models = (instance.value,)
                 else:
-                    raise XuleProcessingError(_(f"Value of the @instance aspect of a factset must be an instance, but found {instance.type}"), xule_context)
+                    raise XuleProcessingError(_("Value of the @instance aspect of a factset must be an instance, but found {}".format(instance.type)), xule_context)
             elif aspect_filter['aspectOperator'] == 'in':
                 if instance.type not in ('set', 'list'):
-                    raise XuleProcessingError(_(f"The value of the @instance aspect with 'in' must be a set or a list, found {instance.type}"), xule_context)
+                    raise XuleProcessingError(_("The value of the @instance aspect with 'in' must be a set or a list, found {}".format(instance.type)), xule_context)
                 models = list()
                 for sub_instance in instance.value:
                     if sub_instance.type == 'instance':
                         models.append(sub_instance.value)
                     else:
-                        raise XuleProcessingError(_(f"Value of the @instance aspect of a factset must be an instance, found {sub_instance.type}"), xule_context)
+                        raise XuleProcessingError(_("Value of the @instance aspect of a factset must be an instance, found {}".format(sub_instance.type)), xule_context)
         elif aspect_name.type == 'qname' and aspect_name.value.localName == 'dimensions' and aspect_name.value.prefix is None:
             # We are going to prepopulate the aspect_dictionary (either aligned or non_aligned.
             # Need to determine is this is aligned or non aligned
@@ -4791,7 +4821,7 @@ def process_factset_aspects(factset, xule_context):
                 else:
                     missing_concept_name = aspect_name.value.clarkNotation
                 raise XuleProcessingError(
-                    _(f"Error while processing factset aspect. Concept {missing_concept_name} not found."),
+                    _("Error while processing factset aspect. Concept %s not found." % missing_concept_name),
                     xule_context)
             if aspect_filter_model_concept.isDimensionItem:
                 # This is a dimension aspect
@@ -4815,7 +4845,8 @@ def process_factset_aspects(factset, xule_context):
                                xule_context)
         else:
             raise XuleProcessingError(_(
-                f"An aspect name must be one of 'concept', 'unit', 'period', 'entity' or a dimension qname, found '{aspect_name.type}'."), xule_context)
+                "An aspect name must be one of 'concept', 'unit', 'period', 'entity' or a dimension qname, found '{}'.".format(
+                    aspect_name.type)), xule_context)
 
     return (non_align_aspects, align_aspects, aspect_vars, models, dimensions_special_value, dimensions_special_covered)
 
@@ -4867,7 +4898,8 @@ def process_aspect_expr(aspect_filter, aspect_type, aspect_name, models, xule_co
 
     if 'wildcard' in aspect_filter:
         if aspect_filter['aspectOperator'] not in ('=', '!='):
-            raise XuleProcessingError(_(f"In a factset a '*' can only be used with '=' or '!=', found '{aspect_filter['aspectOperator'] + ' *'}'"), xule_context)
+            raise XuleProcessingError(_("In a factset a '*' can only be used with '=' or '!=', found '{}'".format(
+                aspect_filter['aspectOperator'] + ' *')), xule_context)
         if aspect_filter['aspectOperator'] == '=':
             aspect_info = (aspect_type, aspect_name, aspect_filter['wildcard'], aspect_filter['aspectOperator'], prop)
             aspect_value = XuleValue(xule_context, None, 'none')
@@ -4934,7 +4966,7 @@ def add_aspect_var(aspect_vars, aspect_type, aspect_name, var_name, aspect_index
     if var_name:
         if var_name in aspect_vars:
             raise XuleProcessingError(
-                _(f"Found multiple aspects with same variable name '{var_name}' in a factset."), xule_context)
+                _("Found multiple aspects with same variable name '%s' in a factset." % (var_name)), xule_context)
         else:
             aspect_vars[var_name] = (aspect_type, aspect_name, aspect_index)
 
@@ -4970,7 +5002,7 @@ def convert_value_to_qname(value, model, xule_context):
         return {None}
     else:
         raise XuleProcessingError(
-            _(f"The value for a line item or dimension must be a qname or concept, found '{value.type}'."),
+            _("The value for a line item or dimension must be a qname or concept, found '%s'." % value.type),
             xule_context)
 
 def convert_value_to_role(value, xule_context):
@@ -4984,7 +5016,7 @@ def convert_value_to_role(value, xule_context):
         return [] # empty list
     else:
         raise XuleProcessingError(
-            _(f"The value for a role or arc role must be a string, uri or short role name, found '{value.type}'."),
+            _("The value for a role or arc role must be a string, uri or short role name, found '%s'." % value.type),
             xule_context)
 
 def convert_value_to_model_period(value, xule_context):
@@ -5005,7 +5037,7 @@ def convert_value_to_model_period(value, xule_context):
                 return (value.value[0], value.value[1] + datetime.timedelta(days=1))
         else:
             raise XuleProcessingError(
-                _(f"Converting result to a period, expected 'instant' or 'duration' but found '{value.type}'"),
+                _("Converting result to a period, expected 'instant' or 'duration' but found '%s'" % value.type),
                 xule_context)
 
 
@@ -5025,7 +5057,7 @@ def match_function_arguments(reference, declaration, xule_context):
         It returns a list of matched arguments as a dictionary.
     '''
     if len(reference['functionArgs']) != len(declaration['functionArgs']):
-        raise XuleProcessingError(_(f"Function call for '{reference['functionName']}' has mismatched arguments."),
+        raise XuleProcessingError(_("Function call for '%s' has mismatched arguments." % reference['functionName']),
                                   xule_context)
     else:
         matched = []
@@ -5084,12 +5116,12 @@ def alignment_to_aspect_info(alignment, xule_context):
                 aspect_value = XuleValue(xule_context, align_value, 'entity')
 
             else:
-                raise XuleProcessingError(_(f"Unknown built in aspect '{align_key[1]}'"), xule_context)
+                raise XuleProcessingError(_("Unknown built in aspect '%s'" % align_key[1]), xule_context)
         elif align_key[0] == 'explicit_dimension':
             aspect_value = XuleValue(xule_context, align_value, model_to_xule_type(xule_context, align_value)[0])
 
         else:
-            raise XuleProcessingError(_(f"Unknown aspect type '{align_key[0]}'"), xule_context)
+            raise XuleProcessingError(_("Unknown aspect type '%s'" % align_key[0]), xule_context)
 
         aspect_dict[aspect_info] = aspect_value
 
@@ -5130,17 +5162,17 @@ def format_trace_info(expr_name, sugar, common_aspects, xule_context):
 
     try:
         if expr_name == 'forExpr':
-            trace_info += f'for (${sugar[0]})'
+            trace_info += 'for ($%s)' % sugar[0]
         elif expr_name == 'ifExpr':
             trace_info += 'if'
         elif expr_name == 'varRef':
-            trace_info += f'var (${sugar[0]})'
+            trace_info += 'var ($%s)' % sugar[0]
         elif expr_name == 'functionReference':
             if len(sugar[1]) == 0:
                 args = "..."
             else:
                 args = ",".join(sugar[1])
-            trace_info += f'{sugar[0]}({args})'
+            trace_info += '%s(%s)' % (sugar[0], args)
         elif expr_name == 'addExpr':
             trace_info += 'add/subtract'
         elif expr_name == 'multExpr':
@@ -5152,7 +5184,7 @@ def format_trace_info(expr_name, sugar, common_aspects, xule_context):
         elif expr_name == 'orExpr':
             trace_info += 'or'
         elif expr_name == 'property':
-            trace_info += f"::{sugar[0]}"
+            trace_info += "::%s" % sugar[0]
         elif expr_name == 'factset':
             if sugar[0].fact is not None:
                 fact_context = get_uncommon_aspects(sugar[0].fact, common_aspects, xule_context)
@@ -5293,13 +5325,13 @@ def result_message(rule_ast, result_ast, xule_value, xule_context):
                     message.append(None)
                 else:
                     raise XuleProcessingError(
-                        _(f"The rule-focus of a rule must be a concept or a fact, found {rule_focus_item.type}"),
+                        _("The rule-focus of a rule must be a concept or a fact, found {}".format(rule_focus_item.type)),
                         xule_context)
         elif message_value.type in ('unbound', 'none'):
             message = None
         else:
             raise XuleProcessingError(
-                _(f"The rule-focus of a rule must be a concept or a fact, found {message_value.type}"),
+                _("The rule-focus of a rule must be a concept or a fact, found {}".format(message_value.type)),
                 xule_context)
     elif result_ast['resultName'] == 'message':
         if message_value.type == 'unbound':
@@ -5319,7 +5351,8 @@ def validate_result_name(result, xule_context):
     if result['resultName'] not in ('message', 'severity', 'rule-suffix', 'rule-focus'):
         if not xule_context.rule_set.hasOutputAttribute(result['resultName']):
             raise XuleProcessingError(_(
-                f"Rule '{xule_context.rule_name}' uses result name '{result['resultName']}' which does not have an output-attribute declaration."))
+                "Rule '{}' uses result name '{}' which does not have an output-attribute declaration.".format(
+                    xule_context.rule_name, result['resultName'])))
 
 
 def get_all_aspects(model_fact, xule_context):
@@ -5439,7 +5472,7 @@ def format_alignment(aspects, xule_context):
 
     if ('builtin', 'entity') in aspects:
         entity_info = aspects[('builtin', 'entity')]
-        aspect_strings.append(f"entity=({entity_info[0]}) {entity_info[1]}")
+        aspect_strings.append("entity=(%s) %s" % (entity_info[0], entity_info[1]))
 
         # dimensions
     dimension_aspects = [(aspect_info[ASPECT], aspect_info, aspect_member) for aspect_info, aspect_member in
@@ -5456,7 +5489,7 @@ def format_alignment(aspects, xule_context):
             '''THE formatted_member SHOULD HANDLE FORMATTING OF NON QNAME VALUES'''
             formatted_member = format_qname(aspect_member, xule_context) if type(
                 aspect_member) == QName else aspect_member
-            aspect_strings.append(f"{format_qname(aspect_info[ASPECT], xule_context)}={formatted_member}")
+            aspect_strings.append("%s=%s" % (format_qname(aspect_info[ASPECT], xule_context), formatted_member))
 
     if len(aspect_strings) > 0:
         aspect_string = "[" + ",\n".join(aspect_strings) + "]"
@@ -5491,7 +5524,8 @@ def format_fact_unit(xule_context, xule_fact):
             # no denominator
             return " * ".join([x.localName for x in numerator])
         else:
-            return f"{' * '.join([x.localName for x in numerator])}/{' * '.join([x.localName for x in denominator])}"
+            return "%s/%s" % (" * ".join([x.localName for x in numerator]),
+                              " * ".join([x.localName for x in denominator]))
     else:
         return None
 
@@ -5611,11 +5645,20 @@ def display_trace_count(traces, rule_part, total_iterations, total_time, level=0
             for key in ('iterations', 'U', 'E', 'c', 'T', 'e', 'R', 'r', 'isE', 'ise', 'isu', 'ex'):
                 if trace[key] > 0:
                     if key == 'iterations':
-                        display_string += f"{'  ' * (level + 1)}{key} {trace[key]} {trace[key] / total_iterations if total_iterations > 0 else 0}\n"
+                        display_string += "{}{} {} {}\n".format("  " * (level + 1),
+                                                                key,
+                                                                trace[key],
+                                                                (trace[
+                                                                     key] / total_iterations) if total_iterations > 0 else 0)
                         # add step values
                         children_time, child_nodes = trace_count_next_time(rule_part, traces)
                         step_time = trace['iterations-t'] - children_time
-                        display_string += f"{'  ' * (level + 1)}Step {step_time.total_seconds()} {step_time / total_time if total_time.total_seconds() > 0 else 0} {str(child_nodes)[1:-1]}\n"
+                        display_string += "{}{} {} {} {}\n".format("  " * (level + 1),
+                                                                   "Step",
+                                                                   step_time.total_seconds(),
+                                                                   (
+                                                                               step_time / total_time) if total_time.total_seconds() > 0 else 0,
+                                                                   str(child_nodes)[1:-1])
                     else:
                         try:
                             display_string += "{}{} {} - Avg: {}  Tot: {} - Avg: {:%}  Tot: {:%}\n".format(
@@ -5635,7 +5678,8 @@ def display_trace_count(traces, rule_part, total_iterations, total_time, level=0
                         total_count += trace[key]
             if total_count != trace['iterations']:
                 display_string += "%sCalc Total %i\n" % ("  " * (level + 1), total_count)
-            display_string += f"{'  ' * (level + 1)}Time {trace['iterations-t'].total_seconds():f} Average {(trace['iterations-t'].total_seconds() / total_count if total_count > 0 else 0):f}\n\n"
+            display_string += "%sTime %f Average %f\n\n" % ("  " * (level + 1), trace['iterations-t'].total_seconds(), (
+                        trace['iterations-t'].total_seconds() / total_count) if total_count > 0 else 0)
         for next_part in rule_part:
             display_string = display_trace_count(traces, next_part, total_iterations, total_time, level + 1,
                                                  display_string)
